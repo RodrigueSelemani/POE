@@ -1,8 +1,9 @@
+import java.io.*;
 import java.util.Scanner;
 import java.util.Random;
 import java.util.stream.*;
 
-public class Main {
+public class  Main {
     public static boolean CheckTaskDesc(String taskDescriptions) {
         return taskDescriptions.length() < 50;
     }
@@ -42,7 +43,27 @@ public class Main {
         return UserName.equals(NewUserName) && userPassword.equals(NewPassword);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+
+        File file = new File("PoeSaved.txt");
+
+        if(file.exists()){
+            System.out.println("File imported Successfully");
+        }else{
+            try {
+                if (file.createNewFile()) {
+                    System.out.println("File created");
+                } else {
+                    System.out.println("Something went Wrong when creating file");
+                }
+
+            }catch(IOException e){
+                System.out.println("An error has occurred");
+                e.printStackTrace();
+            }
+
+        }
+
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Create Account");
@@ -96,17 +117,41 @@ public class Main {
         int numberOption = scanner.nextInt();
         scanner.nextLine(); // Consume newline
 
+
         if (numberOption == 1) {
             secondMain();
         } else if (numberOption == 2) {
-            System.out.println("Coming Soon!");
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                    System.out.println("Would you like to delete content?");
+                    String newResponse = scanner.nextLine();
+                    if(newResponse.equals("yes")){
+                        clearFile();
+                    }
+
+                }
+
+                if((line = reader.readLine()) == null){
+                    System.out.println("FILE IS EMPTY");
+                }
+            } catch (IOException e) {
+                System.out.println("An error occurred displaying the file");
+                e.printStackTrace();
+            }
+
+
         } else if (numberOption == 3) {
             scanner.close();
         }
     }
 
-    public static void secondMain() {
+    public static void secondMain() throws IOException {
         Scanner scanner = new Scanner(System.in);
+
+        File file = new File("PoeSaved.txt");
+
         System.out.print("Enter the number of tasks: ");
         int taskNum = scanner.nextInt();
         scanner.nextLine(); // Consume the newline left-over
@@ -118,6 +163,8 @@ public class Main {
         int[] TaskDuration = new int[taskNum];
         String[] newStatus = new String[taskNum];
 
+
+        {
         for (int i = 0; i < taskNum; i++) {
             System.out.print("Enter Developer Name: ");
             DeveloperDetails[i] = scanner.nextLine();
@@ -164,14 +211,25 @@ public class Main {
 
             System.out.print("Task Duration (hours): ");
             TaskDuration[i] = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();
+
+
+
+
+         }
         }
 
-        printTaskDetails(taskNum, taskNames, DeveloperDetails, taskDescriptions, newStatus, TaskDuration);
+        printTaskDetails(file,taskNum, taskNames, DeveloperDetails, taskDescriptions, newStatus, TaskDuration);
         returnTotalHours(taskNum, TaskDuration);
+
+
+
+
+
+
     }
 
-    public static void printTaskDetails(int taskNum, String[] taskNames, String[] DeveloperDetails, String[] taskDescriptions, String[] newStatus, int[] TaskDuration) {
+    public static void printTaskDetails(File file,int taskNum, String[] taskNames, String[] DeveloperDetails, String[] taskDescriptions, String[] newStatus, int[] TaskDuration) {
         Random random = new Random();
         int min = 100;
         int max = 12500;
@@ -191,6 +249,22 @@ public class Main {
             System.out.println("Task ID: " + taskID);
 
             System.out.println();
+
+
+            try (FileWriter writer = new FileWriter(file, true)) { // 'true' to append to the file if it exists
+                writer.write("Task " + (j + 1) + ":\n");
+                writer.write("Name: " + taskNames[j] + "\n");
+                writer.write("Task Number: " + TaskNumber + "\n");
+                writer.write("Description: " + taskDescriptions[j] + "\n");
+                writer.write("Developer Name: " + DeveloperDetails[j] + "\n");
+                writer.write("Task Duration: " + TaskDuration[j] + " hrs\n");
+                writer.write("Task Status: " + newStatus[j] + "\n");
+                writer.write("Task ID: " + taskID + "\n");
+                writer.write("\n");
+            } catch (IOException e) {
+                System.out.println("An error occurred while writing to the file");
+                e.printStackTrace();
+            }
         }
     }
 
@@ -199,7 +273,31 @@ public class Main {
         String lastTwoChars = developerDetails.substring(Math.max(0, developerDetails.length() - 2)).toUpperCase();
         return firstTwoLetters + ":" + (taskIndex + 1) + ":" + lastTwoChars;
     }
+    public static void clearFile()
 
+    {
+
+        try{
+
+            FileWriter fw = new FileWriter("PoeSaved.txt", false);
+
+            PrintWriter pw = new PrintWriter(fw, false);
+
+            pw.flush();
+
+            pw.close();
+
+            fw.close();
+
+            System.out.println("File successfully Deleted!");
+
+        }catch(Exception exception){
+
+            System.out.println("Exception have been caught");
+
+        }
+
+    }
     public static void returnTotalHours(int taskNum, int[] TaskDuration) {
         int sum = IntStream.of(TaskDuration).sum();
         System.out.println("Total hours worked: " + sum);
